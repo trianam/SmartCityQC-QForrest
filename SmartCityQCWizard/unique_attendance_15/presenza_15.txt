@@ -1,0 +1,5 @@
+Unique attendance at 15 minutes
+
+datetime | datetime |  Date time (quarter hour) in Italian time
+value | uint32 | Presence
+areaAnalisi | string | Area of analysis reference (Whole Municipality or ACE of the municipality)

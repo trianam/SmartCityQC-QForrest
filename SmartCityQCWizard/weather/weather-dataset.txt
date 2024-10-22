@@ -1,0 +1,25 @@
+id          record ID
+ts_get      timestamp record
+hum         humidity, unit: %
+pres        Atmospheric pressure on the sea level, unit: hPa
+rain_1h     Precipitation, unit: mm/h
+wind_speed  Wind speed. Units – unit: metre/sec
+wind_deg    Wind direction, unit: degrees
+clouds_all  Cloudiness, unit: %
+max_temp    Maximum temperature, unit: celsius
+min_temp    Minimum temperature, unit: celsius
+ave_temp    Average temperature, unit: celsius
+cod_weather code convention to weather under the following schema:
+
+    2xx - thunderstorm
+    3xx - drizzle
+    5xx - rain
+    8xx - clouds
+    800 - clear
+    
+    i.e.:
+    200 - thunderstorm with light rain	
+    211 - thunderstorm
+    800 - Clear
+    500 - light rain
+    502 - heavy intensity rain	

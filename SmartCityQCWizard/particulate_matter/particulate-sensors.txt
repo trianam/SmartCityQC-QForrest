@@ -1,0 +1,9 @@
+unit: µg/m3
+
+Danger threahold
+PM2.5: 25 
+PM10 : 50
+
+
+A lower threashold can be tolerated in a long period of time
+
