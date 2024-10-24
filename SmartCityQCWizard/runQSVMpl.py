@@ -101,7 +101,8 @@ else:
         qml.adjoint(AngleEmbedding)(x2, wires=range(n_qubits))
         return qml.expval(qml.Hermitian(projector, wires=range(n_qubits)))
 
-
+print(X_train.shape, X_test.shape)
+exit()
 if usePrecomputedKernel:
     precomputedKernelFilename = f"precomputedKernel_seed-{splitSeed}_amp-{useAmplitude}_columns-{len(xColumns)}_wSizeX-{windowSizeX}.npy"
     if os.path.isfile(precomputedKernelFilename):

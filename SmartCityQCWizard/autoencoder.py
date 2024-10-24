@@ -29,6 +29,8 @@ class AutoEncoder(nn.Module):
         x = self.decoder(x)
         return x
     
+    def predict(self, x):
+        return self.encoder(x)
 
 def train(model, ds, epochs=100):
 
@@ -39,7 +41,7 @@ def train(model, ds, epochs=100):
     model.train()
     losses = 0
     for epoch in range(epochs):
-        for data in tqdm.tqdm(dl, f"Epoch {epoch+1}/{epochs}"):
+        for data in tqdm.tqdm(dl, f"Epoch {epoch+1}/{epochs}", leave=False):
             x = data
             optimizer.zero_grad()
             output = model(x)
@@ -47,7 +49,7 @@ def train(model, ds, epochs=100):
             loss.backward()
             optimizer.step()
             losses += loss.item() * x.shape[0]
-        print(f"Epoch {epoch} loss: {loss.item() / len(ds)}")
+        # print(f"Epoch {epoch} loss: {loss.item() / len(ds)}")
     return model
 
 @torch.no_grad()    
@@ -56,10 +58,10 @@ def predict(model, ds):
     model.eval()
     dl = torch.utils.data.DataLoader(ds, batch_size=32, shuffle=False)
     predictions = []
-    for data in tqdm.tqdm(dl, "Predicting"):
+    for data in tqdm.tqdm(dl, "Predicting", leave=False):
         x = data
         output = model(x)
         loss = criterion(output, x) * x.shape[0]
-        predictions.append(output)
+        predictions.append(model.predict(x))
     print(f"Mean loss: {loss / len(ds)}")
     return torch.cat(predictions, dim=0)
