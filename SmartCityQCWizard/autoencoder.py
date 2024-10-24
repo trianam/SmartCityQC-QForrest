@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from tqdm import tqdm
+import tqdm
 
 class AutoEncoder(nn.Module):
 
@@ -10,10 +10,16 @@ class AutoEncoder(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(in_size, in_size // 2), nn.ReLU(),
             nn.Linear(in_size // 2, in_size // 3), nn.ReLU(),
-            nn.Linear(in_size // 3, latent_size)
+            nn.Linear(in_size // 3, in_size // 4), nn.ReLU(),
+            nn.Linear(in_size // 4, in_size // 5), nn.ReLU(),
+            nn.Linear(in_size // 5, in_size // 6), nn.ReLU(),
+            nn.Linear(in_size // 6, latent_size)
         )
         self.decoder = nn.Sequential(  
-            nn.Linear(latent_size, in_size // 3), nn.ReLU(),
+            nn.Linear(latent_size, in_size // 6), nn.ReLU(),
+            nn.Linear(in_size // 6, in_size // 5), nn.ReLU(),
+            nn.Linear(in_size // 5, in_size // 4), nn.ReLU(),
+            nn.Linear(in_size // 4, in_size // 3), nn.ReLU(),
             nn.Linear(in_size // 3, in_size // 2), nn.ReLU(),
             nn.Linear(in_size // 2, in_size)
         )
@@ -33,7 +39,7 @@ def train(model, ds, epochs=100):
     model.train()
     losses = 0
     for epoch in range(epochs):
-        for data in tqdm(dl, f"Epoch {epoch+1}/{epochs}"):
+        for data in tqdm.tqdm(dl, f"Epoch {epoch+1}/{epochs}"):
             x = data
             optimizer.zero_grad()
             output = model(x)
@@ -50,7 +56,7 @@ def predict(model, ds):
     model.eval()
     dl = torch.utils.data.DataLoader(ds, batch_size=32, shuffle=False)
     predictions = []
-    for data in tqdm(dl, "Predicting"):
+    for data in tqdm.tqdm(dl, "Predicting"):
         x = data
         output = model(x)
         loss = criterion(output, x) * x.shape[0]
