@@ -13,6 +13,9 @@ from qiskit_algorithms.state_fidelities import ComputeUncompute
 from qiskit_machine_learning.kernels import FidelityQuantumKernel
 from qiskit_machine_learning.algorithms import QSVC
 
+from autoencoder import *
+from torch_ds import UnsupervisedDS
+
 from sklearn.decomposition import PCA
 # datasetFile = "particulate_matter/PM_from_01-08-T-00-00_to_10-08-T-21-0@1hr.csv"
 # xColumns = ['PM2.5_Sensor1', 'PM2.5_Sensor2', 'PM2.5_Sensor3', 'PM10_Sensor1', 'PM10_Sensor2', 'PM10_Sensor3']
@@ -33,39 +36,52 @@ xColumns = ['AttendanceArea1', 'AttendanceArea2', 'AttendanceArea3', 'Attendance
 yColumns = ['cod_weather']
 
 random_seed = 42
-n_components = 2
+n_components = 6
 windowSizeX = 12
 windowSizeY = 24
 
-df = pd.read_csv(datasetFile)
+try:
+    print("Loading the dataset...")
+    X_train, X_test, y_train, y_test = np.load(open(f"saved_data/windowDataset_{windowSizeX}_{random_seed}_autoencoder_{n_components}.npy", 'rb')).values()
+except:
+    print("Dataset not found. Creating the dataset...")
+    torch.manual_seed(random_seed)
 
-df = df.loc[:, df.columns.intersection(set(xColumns + yColumns))]
+    df = pd.read_csv(datasetFile)
 
-data = np.vstack([pd.concat([pd.concat([df.iloc[i-windowSizeX:i][k] for k in xColumns]), pd.concat([df.iloc[i:i+windowSizeY][k] for k in yColumns])]).reset_index(drop=True).to_numpy() for i in range(windowSizeX, len(df)-windowSizeY+1)])
+    df = df.loc[:, df.columns.intersection(set(xColumns + yColumns))]
 
-X = data[:,:-windowSizeY*len(yColumns)]
-y = data[:,-windowSizeY*len(yColumns):]
+    data = np.vstack([pd.concat([pd.concat([df.iloc[i-windowSizeX:i][k] for k in xColumns]), pd.concat([df.iloc[i:i+windowSizeY][k] for k in yColumns])]).reset_index(drop=True).to_numpy() for i in range(windowSizeX, len(df)-windowSizeY+1)])
 
-# y = np.mean(y, axis=1)
-# y = y.astype(int).astype(str)
-# r = re.compile('[235].*')
-# vmatch = np.vectorize(lambda x: bool(r.match(x)))
-# y = vmatch(y)
-y = (y + np.ones_like(y)) / 2 
-y = np.logical_or.reduce([y[:,i] for i in range(y.shape[1])]).astype(int)
-scaler = StandardScaler()
+    X = data[:,:-windowSizeY*len(yColumns)]
+    y = data[:,-windowSizeY*len(yColumns):]
 
-X = scaler.fit_transform(X)
+    # y = np.mean(y, axis=1)
+    # y = y.astype(int).astype(str)
+    # r = re.compile('[235].*')
+    # vmatch = np.vectorize(lambda x: bool(r.match(x)))
+    # y = vmatch(y)
+    y = (y + np.ones_like(y)) / 2 
+    y = np.logical_or.reduce([y[:,i] for i in range(y.shape[1])]).astype(int)
+    scaler = StandardScaler()
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_seed)
+    X = scaler.fit_transform(X)
 
-pca = PCA(n_components=n_components)
-pca.fit(X_train)
-print("Explained variance by the PCA:", sum(pca.explained_variance_ratio_))
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_seed)
+    torch_X_train, torch_X_test = UnsupervisedDS(X_train), UnsupervisedDS(X_test)
+    ae = AutoEncoder(in_size=X_train.shape[1], latent_size=n_components)
+    print("Training the autoencoder...")
+    train(ae, torch_X_train, epochs=100)
 
-X_train, X_test = pca.transform(X_train), pca.transform(X_test)
+    fitted_X_train = predict(ae, torch_X_train).numpy()
+    fitted_X_test = predict(ae, torch_X_test).numpy()
+    # pca = PCA(n_components=n_components)
+    # pca.fit(X_train)
+    # print("Explained variance by the PCA:", sum(pca.explained_variance_ratio_))
 
-np.savez(open(f"saved_data/windowDataset_{random_seed}.npy", 'wb'), X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
+    # X_train, X_test = pca.transform(X_train), pca.transform(X_test)
+
+    np.savez(open(f"saved_data/windowDataset_{random_seed}_autoencoder.npy", 'wb'), X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
 
 
 adhoc_feature_map = ZZFeatureMap(feature_dimension=n_components, reps=2, entanglement="linear")
