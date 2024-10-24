@@ -67,7 +67,7 @@ except:
 
     X = scaler.fit_transform(X)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_seed)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=random_seed)
     torch_X_train, torch_X_test = UnsupervisedDS(X_train), UnsupervisedDS(X_test)
     ae = AutoEncoder(in_size=X_train.shape[1], latent_size=n_components)
     print("Training the autoencoder...")
@@ -81,7 +81,7 @@ except:
 
     # X_train, X_test = pca.transform(X_train), pca.transform(X_test)
 
-    np.savez(open(f"saved_data/windowDataset_{random_seed}_autoencoder.npy", 'wb'), X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
+    np.savez(open(f"saved_data/windowDataset_{windowSizeX}_{random_seed}_autoencoder_{n_components}.npy", 'wb'), X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
 
 
 adhoc_feature_map = ZZFeatureMap(feature_dimension=n_components, reps=2, entanglement="linear")

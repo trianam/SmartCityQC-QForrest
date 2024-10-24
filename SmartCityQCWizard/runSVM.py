@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score,StratifiedKFold
 from sklearn.svm import SVC
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -26,7 +26,8 @@ xColumns = ['AttendanceArea1', 'AttendanceArea2', 'AttendanceArea3', 'Attendance
 yColumns = ['cod_weather']
 
 
-windowSizeX = 48
+# windowSizeX = 48
+windowSizeX = 2
 windowSizeY = 24
 
 df = pd.read_csv(datasetFile)
@@ -49,7 +50,7 @@ scaler = StandardScaler()
 
 X = scaler.fit_transform(X)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42, shuffle=True)
 
 np.savez(open("windowDataset.npy", 'wb'), X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
 
@@ -59,16 +60,22 @@ np.savez(open("windowDataset.npy", 'wb'), X_train=X_train, X_test=X_test, y_trai
 model = SVC(kernel='rbf')
 # model = SVC(kernel='sigmoid')
 
-model.fit(X_train, y_train)
+singleSplit = True
 
-p_train = model.predict(X_train)
-p_test = model.predict(X_test)
+if singleSplit:
+    model.fit(X_train, y_train)
 
-# print(mean_absolute_error(y_test, y_pred))
+    p_train = model.predict(X_train)
+    p_test = model.predict(X_test)
 
-print("Train metrics:")
-print(classification_report(y_train, p_train))
+    # print(mean_absolute_error(y_test, y_pred))
 
-print("Test metrics:")
-print(classification_report(y_test, p_test))
+    print("Train metrics:")
+    print(classification_report(y_train, p_train))
 
+    print("Test metrics:")
+    print(classification_report(y_test, p_test))
+
+else:
+    scores = cross_val_score(model, X, y, cv=StratifiedKFold(n_splits=10, shuffle=True), scoring='f1_macro')
+    print(f"10-fold CV F1-macro: {scores.mean():0.2f} +- {scores.std():0.2f}")
