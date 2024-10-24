@@ -21,7 +21,8 @@ if __name__ == "__main__":
 
 
     classicKernels = ["linear", "poly2", "poly4", "rbf", "sigmoid"]
-    wList = [1] + list(range(2,25,2))
+    wList = list(range(1, 25))
+    # wList = [1] + list(range(2,25,2))
     # wList = [1,2,4]
     ySvm = {k:[] for k in classicKernels}
     yQsvm = []
