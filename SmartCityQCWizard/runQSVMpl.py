@@ -45,7 +45,6 @@ singleSplit = True
 
 useAmplitude = True
 
-
 df = pd.read_csv(datasetFile)
 
 df = df.loc[:, df.columns.intersection(set(xColumns + yColumns))]
@@ -67,8 +66,7 @@ scaler = StandardScaler()
 X = scaler.fit_transform(X)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=splitSeed, shuffle=True)
-
-np.savez(open("windowDataset.npy", 'wb'), X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
+# np.savez(open("windowDataset.npy", 'wb'), X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
 
 if useAmplitude:
     n_qubits = np.ceil(np.log2(len(X_train[0]))).astype(int).item()
@@ -103,7 +101,7 @@ else:
 
 
 if usePrecomputedKernel:
-    precomputedKernelFilename = f"precomputedKernel_seed-{splitSeed}_amp-{useAmplitude}_columns-{len(xColumns)}_wSizeX-{windowSizeX}.npy"
+    precomputedKernelFilename = f"precomputedKernel_seed-{splitSeed}_amp-{useAmplitude}_columns-{len(xColumns)}_wSizeX-{windowSizeX}_wSizeY-{windowSizeY}.npy"
     if os.path.isfile(precomputedKernelFilename):
         precomputedKernel = np.load(open(precomputedKernelFilename, 'rb'))
         kernel_train = precomputedKernel['kernel_train']
