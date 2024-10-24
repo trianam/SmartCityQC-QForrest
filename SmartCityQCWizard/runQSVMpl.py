@@ -11,6 +11,7 @@ import pennylane as qml
 from pennylane.templates import AngleEmbedding, AmplitudeEmbedding
 import itertools
 from multiprocessing import Pool
+import os
 
 # datasetFile = "particulate_matter/PM_from_01-08-T-00-00_to_10-08-T-21-0@1hr.csv"
 # xColumns = ['PM2.5_Sensor1', 'PM2.5_Sensor2', 'PM2.5_Sensor3', 'PM10_Sensor1', 'PM10_Sensor2', 'PM10_Sensor3']
@@ -35,6 +36,16 @@ yColumns = ['cod_weather']
 windowSizeX = 2
 windowSizeY = 24
 
+splitSeed = 42
+
+usePrecomputedKernel = True
+parallelizeKernel = True
+
+singleSplit = True
+
+useAmplitude = True
+
+
 df = pd.read_csv(datasetFile)
 
 df = df.loc[:, df.columns.intersection(set(xColumns + yColumns))]
@@ -55,12 +66,9 @@ scaler = StandardScaler()
 
 X = scaler.fit_transform(X)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42, shuffle=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=splitSeed, shuffle=True)
 
 np.savez(open("windowDataset.npy", 'wb'), X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
-
-
-useAmplitude = True
 
 if useAmplitude:
     n_qubits = np.ceil(np.log2(len(X_train[0]))).astype(int).item()
@@ -94,53 +102,56 @@ else:
         return qml.expval(qml.Hermitian(projector, wires=range(n_qubits)))
 
 
-
-usePrecomputedKernel = True
-parallelizeKernel = True
-
 if usePrecomputedKernel:
-    if parallelizeKernel:
-        # Train kernel
-
-        kernel_train = np.zeros([len(X_train), len(X_train)])
-
-        indexList = list(itertools.combinations(range(len(X_train)), 2))
-        def fTrain(indices):
-            i,j=indices
-            return kernel(X_train[i], X_train[j])
-
-        with Pool(None) as p:
-            # resultsList = p.map(fTrain, indexList)
-            resultsList = list(tqdm.tqdm(p.imap(fTrain, indexList), total=len(indexList)))
-
-        for (i, j),r in zip(indexList, resultsList):
-            kernel_train[i, j] = kernel_train[j, i] = r
-
-        # Test kernel
-        kernel_test = np.zeros([len(X_test), len(X_train)])
-
-        indexList = list(itertools.product(range(len(X_test)), range(len(X_train))))
-        def fTest(indices):
-            i, j = indices
-            return kernel(X_test[i], X_train[j])
-
-        with Pool(None) as p:
-            # resultsList = p.map(fTest, indexList)
-            resultsList = list(tqdm.tqdm(p.imap(fTest, indexList), total=len(indexList)))
-
-        for (i, j), r in zip(indexList, resultsList):
-            kernel_test[i, j] = r
+    precomputedKernelFilename = f"precomputedKernel_seed-{splitSeed}_amp-{useAmplitude}_columns-{len(xColumns)}_wSizeX-{windowSizeX}.npy"
+    if os.path.isfile(precomputedKernelFilename):
+        precomputedKernel = np.load(open(precomputedKernelFilename, 'rb'))
+        kernel_train = precomputedKernel['kernel_train']
+        kernel_test = precomputedKernel['kernel_test']
 
     else:
-        kernel_train = np.zeros([len(X_train), len(X_train)])
-        for i,j in tqdm.tqdm(list(itertools.combinations(range(len(X_train)), 2))):
-            kernel_train[i,j] = kernel_train[j,i] = kernel(X_train[i], X_train[j])
-
-        kernel_test = np.zeros([len(X_test), len(X_train)])
-        for i,j in tqdm.tqdm(list(itertools.product(range(len(X_test)), range(len(X_train))))):
-            kernel_test[i,j] = kernel(X_test[i], X_train[j])
-
-    np.savez(open("precomputedKernel.npy", 'wb'), kernel_train=kernel_train, kernel_test=kernel_test)
+        if parallelizeKernel:
+            # Train kernel
+    
+            kernel_train = np.zeros([len(X_train), len(X_train)])
+    
+            indexList = list(itertools.combinations(range(len(X_train)), 2))
+            def fTrain(indices):
+                i,j=indices
+                return kernel(X_train[i], X_train[j])
+    
+            with Pool(None) as p:
+                # resultsList = p.map(fTrain, indexList)
+                resultsList = list(tqdm.tqdm(p.imap(fTrain, indexList), total=len(indexList)))
+    
+            for (i, j),r in zip(indexList, resultsList):
+                kernel_train[i, j] = kernel_train[j, i] = r
+    
+            # Test kernel
+            kernel_test = np.zeros([len(X_test), len(X_train)])
+    
+            indexList = list(itertools.product(range(len(X_test)), range(len(X_train))))
+            def fTest(indices):
+                i, j = indices
+                return kernel(X_test[i], X_train[j])
+    
+            with Pool(None) as p:
+                # resultsList = p.map(fTest, indexList)
+                resultsList = list(tqdm.tqdm(p.imap(fTest, indexList), total=len(indexList)))
+    
+            for (i, j), r in zip(indexList, resultsList):
+                kernel_test[i, j] = r
+    
+        else:
+            kernel_train = np.zeros([len(X_train), len(X_train)])
+            for i,j in tqdm.tqdm(list(itertools.combinations(range(len(X_train)), 2))):
+                kernel_train[i,j] = kernel_train[j,i] = kernel(X_train[i], X_train[j])
+    
+            kernel_test = np.zeros([len(X_test), len(X_train)])
+            for i,j in tqdm.tqdm(list(itertools.product(range(len(X_test)), range(len(X_train))))):
+                kernel_test[i,j] = kernel(X_test[i], X_train[j])
+    
+        np.savez(open(precomputedKernelFilename, 'wb'), kernel_train=kernel_train, kernel_test=kernel_test)
 
     model = SVC(kernel='precomputed')
 
@@ -161,9 +172,6 @@ else:
 
 
     model = SVC(kernel=kernel_matrix)
-
-
-singleSplit = True
 
 if singleSplit:
     if not usePrecomputedKernel:
