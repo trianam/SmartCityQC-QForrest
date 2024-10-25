@@ -1,13 +1,18 @@
 # QuantumCodeChallengeHackathon
 ## team members
 - Stefano Martina: 
-  - mail: stefano.martina@gmail.com, 
-  - github: trianam, 
+  - mail: stefano.martina@unifi.it 
+  - github: trianam 
   - discord: stefano_martina_wizard
 - Emanuele Casciaro: 
-  - mail: emanuele.casciaro@gmail.com
+  - mail: emanuele.casciaro@unifi.it 
   - github: Cascetto
   - discord: emanuele_casciaro_wizard
+- Marco Parigi:
+  - mail: marco.parigi@unifi.it
+  - github: marcopquantum
+  - discord: marco_parigi_wizard
+    
 
 Quantum Code Challenge Hackathon for Smart Cities at CTE - Cagliari Digital Lab
 
