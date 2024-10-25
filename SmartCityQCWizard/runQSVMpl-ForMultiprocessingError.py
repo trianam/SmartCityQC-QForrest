@@ -217,7 +217,7 @@ for windowSizeY in [1,2,4,6,8,10,12,14,16,18,20,22,24,3,5,7,9,11,13,15,17,19,21,
         # print(mean_absolute_error(y_test, y_pred))
 
         if returnMF1:
-            print("Stocazzo")
+            print("No")
             # return f1_score(y_test, p_test, average='macro')
         else:
             print("Train metrics:")
