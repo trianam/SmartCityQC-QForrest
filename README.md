@@ -12,6 +12,10 @@
   - mail: marco.parigi@unifi.it
   - github: marcopquantum
   - discord: marco_parigi_wizard
+- Ettore Canonici:
+  - mail: ettore.canonici@unifi.it
+  - github: EttoreCanonici
+  - discord: ettore_canonici_wizard
     
 
 Quantum Code Challenge Hackathon for Smart Cities at CTE - Cagliari Digital Lab
