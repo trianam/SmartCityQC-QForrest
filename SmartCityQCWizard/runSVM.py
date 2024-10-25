@@ -61,8 +61,11 @@ def run(datasetFile, xColumns, yColumns, windowSizeX, windowSizeY, singleSplit, 
             print(classification_report(y_test, p_test))
 
     else:
-        scores = cross_val_score(model, X, y, cv=StratifiedKFold(n_splits=10, shuffle=True), scoring='f1_macro')
-        print(f"10-fold CV F1-macro: {scores.mean():0.2f} +- {scores.std():0.2f}")
+        scores = cross_val_score(model, X, y, cv=StratifiedKFold(n_splits=10, shuffle=True, random_state=43), scoring='f1_macro')
+        if returnMF1:
+            return scores.mean(), scores.std()
+        else:
+            print(f"10-fold CV F1-macro: {scores.mean():0.2f} +- {scores.std():0.2f}")
 
 
 if __name__ == "__main__":
@@ -74,12 +77,16 @@ if __name__ == "__main__":
     # xColumns = ['hum', 'pres', 'rain_1h', 'wind_speed', 'wind_deg', 'clouds_all', 'ave_temp']
     # yColumns = ['cod_weather']
 
-    datasetFile = "final_ds.csv"
-    xColumns = ['AttendanceArea1', 'AttendanceArea2', 'AttendanceArea3', 'AttendanceArea4', 'AttendanceArea5',
-                'AttendanceArea6', 'AttendanceArea7', 'AttendanceArea8', 'AttendanceArea9', 'AttendanceArea10',
-                'AttendanceArea11', 'AttendanceArea12', 'PM2.5_Sensor1', 'PM2.5_Sensor2', 'PM2.5_Sensor3',
-                'PM10_Sensor1', 'PM10_Sensor2', 'PM10_Sensor3', 'hum', 'pres', 'rain_1h', 'wind_speed', 'wind_deg',
-                'clouds_all', 'max_temp', 'min_temp', 'ave_temp']
+    # datasetFile = "final_ds.csv"
+    datasetFile = "final_ds_agg.csv"
+    # xColumns = ['AttendanceArea1', 'AttendanceArea2', 'AttendanceArea3', 'AttendanceArea4', 'AttendanceArea5',
+    #             'AttendanceArea6', 'AttendanceArea7', 'AttendanceArea8', 'AttendanceArea9', 'AttendanceArea10',
+    #             'AttendanceArea11', 'AttendanceArea12', 'PM2.5_Sensor1', 'PM2.5_Sensor2', 'PM2.5_Sensor3',
+    #             'PM10_Sensor1', 'PM10_Sensor2', 'PM10_Sensor3', 'hum', 'pres', 'rain_1h', 'wind_speed', 'wind_deg',
+    #             'clouds_all', 'max_temp', 'min_temp', 'ave_temp']
+    xColumns = ['AttendanceAreaTot', 'PM2.5_avg', 'PM10_avg', 'hum', 'pres', 'rain_1h', 'wind_speed', 'wind_deg',
+                'clouds_all', 'ave_temp']
+
     # xColumns = ['rain_1h']
     # xColumns = ['clouds_all']
     # xColumns = ['AttendanceArea1', 'AttendanceArea2', 'AttendanceArea3', 'AttendanceArea4', 'AttendanceArea5', 'AttendanceArea6', 'AttendanceArea7', 'AttendanceArea8', 'AttendanceArea9', 'AttendanceArea10', 'AttendanceArea11', 'AttendanceArea12', 'PM2.5_Sensor1', 'PM2.5_Sensor2', 'PM2.5_Sensor3', 'PM10_Sensor1', 'PM10_Sensor2', 'PM10_Sensor3']
@@ -89,13 +96,18 @@ if __name__ == "__main__":
     yColumns = ['cod_weather']
 
     # windowSizeX = 48
-    windowSizeX = 2
-    windowSizeY = 2
+    windowSizeX = 1
+    windowSizeY = 24
 
     singleSplit = True
+    # singleSplit = False
 
     returnMF1 = False
 
-    kernel='rbf'
+    # kernel='linear'
+    # kernel='poly2'
+    # kernel='poly4'
+    kernel='sigmoid'
+    # kernel='rbf'
 
     run(datasetFile, xColumns, yColumns, windowSizeX, windowSizeY, singleSplit, returnMF1, kernel)
