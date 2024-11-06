@@ -42,17 +42,20 @@ circuit = "angle2nd"
 
 returnMF1 = False
 
-predictionsWindows = [1,2,4,6,8,10,12,14,16,18,20,22,24,3,5,7,9,11,13,15,17,19,21,23]
-seeds = [42 * i for i in range(1, 11)]
-circuits = ["angle", "angle2nd"]
+predictionsWindows = [1] + [2 * i for i in range(1, 13)] #[1,2,4,6,8,10,12,14,16,18,20,22,24,3,5,7,9,11,13,15,17,19,21,23]
+# seeds = [528, 491, 25, 73]
+seeds = [528, 491]
+# seeds = [4, 7, 12, 17]
+circuits = ["angle", "angle2nd", "amplitude"]
+# circuits = ["amplitude"]
 
 hyperparameters = list(itertools.product(predictionsWindows, seeds, circuits))
 
 # for windowSizeY in predictionsWindows:
 # for windowSizeY in [24]:
-for windowSizeY, splitSeed, circuit in hyperparameters:
+for run_number, (windowSizeY, splitSeed, circuit) in enumerate(hyperparameters):
     print("======================================================")
-    print(f"Creating for window {windowSizeY}, seed {splitSeed}, circuit {circuit}")
+    print(f"Creating for window {windowSizeY}, seed {splitSeed}, circuit {circuit}, run {run_number+1}/{len(hyperparameters)}")
 
     df = pd.read_csv(datasetFile)
 
@@ -182,36 +185,36 @@ for windowSizeY, splitSeed, circuit in hyperparameters:
 
                 kernel_train = np.zeros([len(X_train), len(X_train)])
 
-                # indexList = list(itertools.combinations(range(len(X_train)), 2))
-                # def fTrain(indices):
-                #     i,j=indices
-                #     return kernel(X_train[i], X_train[j])
+                indexList = list(itertools.combinations(range(len(X_train)), 2))
+                def fTrain(indices):
+                    i,j=indices
+                    return kernel(X_train[i], X_train[j])
 
-                # with Pool(None) as p:
-                #     # resultsList = p.map(fTrain, indexList)
-                #     resultsList = list(tqdm.tqdm(p.imap(fTrain, indexList), total=len(indexList)))
+                with Pool(None) as p:
+                    # resultsList = p.map(fTrain, indexList)
+                    resultsList = list(tqdm.tqdm(p.imap(fTrain, indexList), total=len(indexList)))
 
-                # for (i, j),r in zip(indexList, resultsList):
-                #     kernel_train[i, j] = kernel_train[j, i] = r
+                for (i, j),r in zip(indexList, resultsList):
+                    kernel_train[i, j] = kernel_train[j, i] = r
 
-                # # Test kernel
-                # kernel_test = np.zeros([len(X_test), len(X_train)])
+                # Test kernel
+                kernel_test = np.zeros([len(X_test), len(X_train)])
 
-                # indexList = list(itertools.product(range(len(X_test)), range(len(X_train))))
-                # def fTest(indices):
-                #     i, j = indices
-                #     return kernel(X_test[i], X_train[j])
+                indexList = list(itertools.product(range(len(X_test)), range(len(X_train))))
+                def fTest(indices):
+                    i, j = indices
+                    return kernel(X_test[i], X_train[j])
 
-                # with Pool(None) as p:
-                #     # resultsList = p.map(fTest, indexList)
-                #     resultsList = list(tqdm.tqdm(p.imap(fTest, indexList), total=len(indexList)))
+                with Pool(None) as p:
+                    # resultsList = p.map(fTest, indexList)
+                    resultsList = list(tqdm.tqdm(p.imap(fTest, indexList), total=len(indexList)))
 
-                # for (i, j), r in zip(indexList, resultsList):
-                #     kernel_test[i, j] = r
+                for (i, j), r in zip(indexList, resultsList):
+                    kernel_test[i, j] = r
 
                 # classic linear kernel for test
-                kernel_train = X_train @ X_train.T
-                kernel_test = X_test @ X_train.T
+                # kernel_train = X_train @ X_train.T
+                # kernel_test = X_test @ X_train.T
 
             else:
                 kernel_train = np.zeros([len(X_train), len(X_train)])
